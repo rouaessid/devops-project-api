@@ -7,7 +7,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 # ============================
-#  Firebase Initialization
+# Firebase Initialization
 # ============================
 
 cred = credentials.Certificate("firebase-key.json")
@@ -15,7 +15,7 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 # ============================
-#  FastAPI App
+# FastAPI App
 # ============================
 
 app = FastAPI(
@@ -25,7 +25,7 @@ app = FastAPI(
 )
 
 # ============================
-#  Pydantic Models
+# Pydantic Models
 # ============================
 
 class TaskInput(BaseModel):
@@ -37,7 +37,7 @@ class Task(TaskInput):
     id: str
 
 # ============================
-#  Root & Health
+# Root & Health
 # ============================
 
 @app.get("/")
@@ -52,17 +52,15 @@ def health_check():
     return {"status": "ok"}
 
 # ============================
-#  CRUD - TASKS
+# CRUD - TASKS
 # ============================
 
-# CREATE
 @app.post("/tasks", response_model=Task, status_code=201)
 def create_task(task: TaskInput):
     task_id = str(uuid4())
     db.collection("tasks").document(task_id).set(task.dict())
     return Task(id=task_id, **task.dict())
 
-# READ ALL
 @app.get("/tasks", response_model=List[Task])
 def get_tasks():
     tasks = []
@@ -70,7 +68,6 @@ def get_tasks():
         tasks.append(Task(id=doc.id, **doc.to_dict()))
     return tasks
 
-# READ BY ID
 @app.get("/tasks/{task_id}", response_model=Task)
 def get_task(task_id: str):
     doc = db.collection("tasks").document(task_id).get()
@@ -78,21 +75,17 @@ def get_task(task_id: str):
         raise HTTPException(status_code=404, detail="Task not found")
     return Task(id=doc.id, **doc.to_dict())
 
-# UPDATE
 @app.put("/tasks/{task_id}", response_model=Task)
 def update_task(task_id: str, task: TaskInput):
     ref = db.collection("tasks").document(task_id)
     if not ref.get().exists:
         raise HTTPException(status_code=404, detail="Task not found")
-
     ref.update(task.dict())
     return Task(id=task_id, **task.dict())
 
-# DELETE
 @app.delete("/tasks/{task_id}", status_code=204)
 def delete_task(task_id: str):
     ref = db.collection("tasks").document(task_id)
     if not ref.get().exists:
         raise HTTPException(status_code=404, detail="Task not found")
-
     ref.delete()
