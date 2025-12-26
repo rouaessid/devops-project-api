@@ -1,4 +1,4 @@
-firebase-key.json
+
 
 
 # Byte-compiled / optimized / DLL files
@@ -208,3 +208,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+
+# Firebase service account key
+firebase-key.json
