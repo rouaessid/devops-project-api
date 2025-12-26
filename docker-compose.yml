@@ -1,5 +1,7 @@
 version: '3.8'
+
 services:
+  # Ton application (Le Producteur de données)
   api:
     build: .
     container_name: devops-api
@@ -7,3 +9,12 @@ services:
       - "8000:8000"
     volumes:
       - ./firebase-key.json:/app/firebase-key.json
+
+  # Le système de surveillance (Le Consommateur de données)
+  prometheus:
+    image: prom/prometheus
+    container_name: devops-prometheus
+    ports:
+      - "9090:9090" 
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml 
