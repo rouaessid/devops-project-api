@@ -31,7 +31,7 @@ jobs:
         run: |
           STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:8000/docs)
           if [ "$STATUS" != "200" ]; then
-            echo "⚠️ API is not responding at /docs (status $STATUS)"
+            echo " API is not responding at /docs (status $STATUS)"
           else
             echo " API is up"
           fi
@@ -48,7 +48,7 @@ jobs:
 
       # Upload reports as artifacts
       - name: Upload ZAP Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: zap-scan-report   #  Nom valide
           path: |
