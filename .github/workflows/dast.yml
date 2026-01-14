@@ -1,0 +1,42 @@
+name: DAST Security Scan 🕵️
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    name: Scan OWASP ZAP
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Firebase Key File
+        run: echo '${{ secrets.FIREBASE_KEY }}' > firebase-key.json
+
+      - name: Build Container
+        run: docker build -t test-api-dast .
+
+      - name: Run Container
+        run: |
+          # Démarrage de ton API en arrière-plan
+          docker run -d --network host --name test-api-dast test-api-dast
+          echo "⏳ Démarrage de l'API..."
+          sleep 10
+      
+      - name: Check API Status
+        run: curl -v http://localhost:8000/docs || echo "⚠️ L'API ne répond pas sur /docs"
+
+      # --- LA CORRECTION EST ICI ---
+      # On lance ZAP manuellement via Docker pour éviter le bug d'upload d'artefact
+      - name: Run ZAP Security Scan
+        run: |
+          docker run --network host \
+            -t ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://localhost:8000/docs -I
+          
+     
