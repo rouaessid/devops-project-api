@@ -1,0 +1,37 @@
+name: DAST Security Scan
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+    name: Scan OWASP ZAP
+
+    steps:
+      # 1. On récupère ton code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. On construit l'image Docker 
+      - name: Build Container
+        run: docker build -t test-api-dast .
+
+      # 3. On lance l'application en arrière-plan
+      - name: Run Container
+        run: |
+          docker run -d -p 8000:8000 --name test-api-dast test-api-dast
+          echo " Démarrage de l'API..."
+          sleep 10 # On attend 10s que l'API soit prête
+
+      # 4. Le Hacker Automatique (OWASP ZAP) attaque le localhost:8000
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.11.0
+        with:
+          target: 'http://localhost:8000'
+          # fail_action: false -> On ne bloque pas le pipeline pour l'instant
+          fail_action: false 
+          allow_issue_writing: false
