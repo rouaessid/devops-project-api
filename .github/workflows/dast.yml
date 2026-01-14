@@ -1,4 +1,4 @@
-name: DAST Security Scan
+name: DAST Security Scan 🕵️
 
 on:
   push:
@@ -12,26 +12,32 @@ jobs:
     name: Scan OWASP ZAP
 
     steps:
-      # 1. On récupère ton code
+      # 1. On récupère le code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. On construit l'image Docker 
+      # 2. ON CRÉE LE FICHIER MANQUANT (C'est ici !)
+      - name: Create Firebase Key File
+        run: echo '${{ secrets.FIREBASE_KEY }}' > firebase-key.json
+
+      # 3. On construit l'image (Maintenant Docker va trouver le fichier !)
       - name: Build Container
         run: docker build -t test-api-dast .
 
-      # 3. On lance l'application en arrière-plan
+      # 4. On lance le conteneur (Avec --network host pour faciliter la connexion)
       - name: Run Container
         run: |
-          docker run -d -p 8000:8000 --name test-api-dast test-api-dast
-          echo " Démarrage de l'API..."
-          sleep 10 # On attend 10s que l'API soit prête
+          docker run -d --network host --name test-api-dast test-api-dast
+          echo "⏳ Démarrage de l'API..."
+          sleep 10
 
-      # 4. Le Hacker Automatique (OWASP ZAP) attaque le localhost:8000
+      # 5. On scanne (Avec network host implicite via localhost)
       - name: ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.11.0
+        uses: zaproxy/action-baseline@v0.12.0
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          docker_name: 'owasp/zap2docker-stable'
           target: 'http://localhost:8000'
-          # fail_action: false -> On ne bloque pas le pipeline pour l'instant
+          cmd_options: '-a'
           fail_action: false 
           allow_issue_writing: false
